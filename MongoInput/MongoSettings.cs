@@ -12,5 +12,6 @@ namespace MongoInput
         public string DatabaseName { get; set; }
         public bool IsSiteEnabled {  get; set; }
         public string SiteId { get; set; }
+        public string[] CollectionNames { get; set; }
     }
 }
