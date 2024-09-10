@@ -8,13 +8,11 @@ namespace MongoInput.Providers
 {
     public class MongoListProvider
     {
-        // Создание экземпляра MongoDBConnector
         private IMongoDatabase _db;
         private string _siteId;
         private IMongoCollection<MongoList> _listCollection;
         private bool _isSiteEnabled;
-        // Ваш код работы с MongoDB
-        // Пример: Получение коллекции и вывод ее имени
+
         public MongoListProvider(MongoSettings mongoSettings)
         {
             IMongoClient client = new MongoClient(mongoSettings.ConnectionString);
@@ -48,26 +46,46 @@ namespace MongoInput.Providers
 
         }
 
-        public async Task<List<ObjectId>> GetCollectionElementsIdsAsync(string collectionName, int pageNumber, int pageSize)
+        /// <summary>
+        /// Асинхронно получает список ObjectId элементов из коллекции MongoDB с пагинацией через lastObjectId.
+        /// Можно также сделать через asyncCursor
+        /// </summary>
+        /// <param name="collectionName">Название коллекции.</param>
+        /// <param name="lastId">Последний ObjectId, с которого начинать выборку (опционально).</param>
+        /// <param name="pageSize">Количество элементов на одну страницу.</param>
+        /// <returns>Список ObjectId элементов коллекции.</returns>
+        public async Task<List<ObjectId>> GetCollectionElementsIdsAsync(string collectionName, ObjectId? lastId, int pageSize)
         {
             var collection = _db.GetCollection<MongoElement>(GetFullCollectionName(collectionName));
 
-            var filter = Builders<MongoElement>.Filter.Empty; // Пустой фильтр для получения всех документов
+            var filter = lastId.HasValue
+                ? Builders<MongoElement>.Filter.Gt(x => x.Id, lastId.Value)
+                : Builders<MongoElement>.Filter.Empty;
+
             var result = await collection.Find(filter)
-                                         .Skip((pageNumber - 1) * pageSize)
                                          .Limit(pageSize)
                                          .ToListAsync();
 
             return result.Select(x => x.Id).ToList();
         }
 
-        public async Task<List<MongoListItem>> GetCollectionShortFilesAsync(string collectionName, int pageNumber, int pageSize)
+        /// <summary>
+        /// Асинхронно получает краткий список файлов (элементов) из коллекции MongoDB с пагинацией.
+        /// </summary>
+        /// <param name="collectionName">Название коллекции, из которой производится выборка.</param>
+        /// <param name="lastId">Идентификатор последнего элемента для пагинации (опционально).</param>
+        /// <param name="pageSize">Количество элементов на страницу для пагинации.</param>
+        /// <returns>Список элементов <see cref="MongoListItem"/> из коллекции.</returns>
+        public async Task<List<MongoListItem>> GetCollectionShortFilesAsync(string collectionName, string? lastId, int pageSize)
         {
             var collection = _db.GetCollection<MongoListItem>(GetFullCollectionName(collectionName));
-            var filter = Builders<MongoListItem>.Filter.Empty; // Пустой фильтр для получения всех документов
+
+            var filter = !string.IsNullOrEmpty(lastId)
+                ? Builders<MongoListItem>.Filter.Gt(x => x.Id, lastId)
+                : Builders<MongoListItem>.Filter.Empty;
 
             var result = await collection.Find(filter)
-                                         .Skip((pageNumber - 1) * pageSize)
+                                         .Sort(Builders<MongoListItem>.Sort.Ascending(x => x.Id))
                                          .Limit(pageSize)
                                          .ToListAsync();
 

@@ -27,20 +27,7 @@ namespace MongoInput.Providers
 
             return files.ToArray();
         }
-        //public async Task<GridFSFileInfo[]> GetAttachmentsByRelatedItemIdsAsync(string relatedListId, params ObjectId[] relatedItemIds)
-        //{
-        //    var fieldRelatedItemId = BsonPropertiesHelper.GetPropertyDbName<MongoAttachmentMetadata>(nameof(MongoAttachmentMetadata.RelatedItemId));
-        //    var fieldRelatedListId = BsonPropertiesHelper.GetPropertyDbName<MongoAttachmentMetadata>(nameof(MongoAttachmentMetadata.RelatedListId));
 
-        //    var filter = Builders<GridFSFileInfo>.Filter.And(
-        //        Builders<GridFSFileInfo>.Filter.In($"Metadata.{fieldRelatedItemId}", relatedItemIds),
-        //        Builders<GridFSFileInfo>.Filter.Eq(it => it.Metadata[fieldRelatedListId], relatedListId)
-        //    );
-
-        //    var files = await _filesBucket.Find(filter).ToListAsync();
-
-        //    return files.ToArray();
-        //}
         public async Task<byte[]> GetAttachmentContentByIdAsync(ObjectId attachmentId)
         {
             return await _filesBucket.DownloadAsBytesAsync(attachmentId);
